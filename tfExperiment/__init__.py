@@ -1,5 +1,4 @@
 import os
-import tensorlayer as tl
 import tensorflow as tf
 import inspect
 from dotmap import DotMap as dm
@@ -7,15 +6,6 @@ from dotmap import DotMap as dm
 from dataSaver import DataSaver
 from timer import Timer
 from pygit2 import Repository
-
-
-
-"""
-with experiment.openSession(epochs = 1, saveAfter = 2, testAfter = 2) as ts:
-    ts.saveGraph()
-    ts.train(trainingFun, extraArgs)
-    ts.test(testingFun, extraArgs)
-"""
 
 class DisposableSession():
     def __init__(self, epochs, saveAfter, testAfter, experiment = None):
