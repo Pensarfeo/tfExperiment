@@ -4,7 +4,7 @@ import inspect
 from dotmap import DotMap as dm
 
 from dataSaver import DataSaver
-from timer import Timer
+from stepTimer import Timer
 from pygit2 import Repository
 
 class DisposableSession():
