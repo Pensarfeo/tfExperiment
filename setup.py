@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name = "tfExperiment",
-    version = "0.0.1",
+    version = "0.0.2",
     author = "Pedro A. Favuzzi",
     author_email = "pa.favuzzi@gmail.com",
     description = "A simple library to manage Tensorflow experiments though git and reduce boilerplate. Compatible with tf 1.x",
@@ -21,7 +21,7 @@ setuptools.setup(
     install_requires = [            # I get to this in a second
         "dotmap",
         "dataSaver",
-        "timer",
+        "stepTimer",
         "pygit2",
         'tensorflow',
     ],
