@@ -66,3 +66,35 @@ The env object contains
 * ```env.training.dataSaver: dataSaver Instance```: dataSaver instance (initialized with env.training.dataSavePath) for training to the training file.
 * ```env.testing.dataSavePath: path string``` path in which the data will be used if dataSaver is used during testing.
 * ```env.testing.dataSaver: dataSaver Instance```: dataSaver instance (initialized with env.testing.dataSavePath) for testing to the training file.
+
+### Proposed New API
+
+```python
+def TrainExperiment(Experiment):
+    def __init__(self, constructor, ...):
+        #someconfig
+        #self.nrTotEpochs
+        #self.epochsToValidateAfter
+        #...
+    
+    def beforeEpoch
+    def afterEpoch
+    
+    def beforeSave
+    def afterSave
+    
+    def beforeTest
+    def afterTest
+
+    def beforeIteration
+    def afterIteration
+    
+    def train(session, data, dataProvider = None):
+        return 0 #trainingLoopPerSession
+    
+    def validate(session, data, dataProvider = None):
+        return 0 #trainingLoopPerSession
+    
+
+experiment(TrainExperiment)
+```

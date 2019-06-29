@@ -16,6 +16,7 @@ class DisposableSession():
         self.testAfter = testAfter
         self.trainCallback = None
         self.testCallback = None
+        self.config = None
 
     def saveGraph(self):
         self._saveGraph = True
@@ -120,7 +121,15 @@ class Experiment():
         
         env = self.env
         
-        with tf.Session() as session:
+        # Allow memory to grow so not all memory is assigned at once
+        # This is a real issue with multy gpu which can make everything crash
+        if self.config:
+            config = self.config
+        else:
+            config = tf.ConfigProto()
+            config.gpu_options.allow_growth = True
+
+        with tf.Session(config) as session:
             # save gaph
             self.setUpTrainingSession(session, saveGraph)
             
