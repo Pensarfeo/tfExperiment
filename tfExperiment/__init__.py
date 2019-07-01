@@ -129,7 +129,7 @@ class Experiment():
             config = tf.ConfigProto()
             config.gpu_options.allow_growth = True
 
-        with tf.Session(config) as session:
+        with tf.Session(config = config) as session:
             # save gaph
             self.setUpTrainingSession(session, saveGraph)
             
