@@ -37,7 +37,7 @@ class DisposableSession():
 
 
 class Experiment():
-    def __init__(self, name = None, finalizeGraph = False):
+    def __init__(self, name = None, finalizeGraph = False, max_to_keep = 5, keep_checkpoint_every_n_hours = 1):
         self.runName = Repository('.').head.shorthand if name == None else name
         self.modelSaveDir = os.path.join(os.getcwd(), 'output', self.runName, 'trainedModels')
         self.modelSavePath = os.path.join(self.modelSaveDir, 'model.ckpt')
@@ -54,7 +54,7 @@ class Experiment():
         self.finalizeGraph = finalizeGraph
 
         if not tf.get_default_graph().finalized:
-            self.saver = tf.train.Saver()
+            self.saver = tf.train.Saver(max_to_keep = max_to_keep, keep_checkpoint_every_n_hours = keep_checkpoint_every_n_hours)
 
         self.initDatasaver('training')
         self.initDatasaver('testing')

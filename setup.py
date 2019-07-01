@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name = "tfExperiment",
-    version = "0.1.7",
+    version = "0.2.7",
     author = "Pedro A. Favuzzi",
     author_email = "pa.favuzzi@gmail.com",
     description = "A simple library to manage Tensorflow experiments though git and reduce boilerplate. Compatible with tf 1.x",
