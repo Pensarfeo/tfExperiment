@@ -16,7 +16,6 @@ class DisposableSession():
         self.testAfter = testAfter
         self.trainCallback = None
         self.testCallback = None
-        self.config = None
 
     def saveGraph(self):
         self._saveGraph = True
@@ -59,7 +58,8 @@ class Experiment():
 
         self.initDatasaver('training')
         self.initDatasaver('testing')
-        return
+
+        self.config = None
 
     def initDatasaver(self, type):
         env = self.env[type]
