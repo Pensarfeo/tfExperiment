@@ -35,21 +35,24 @@ class DisposableSession():
 
 
 
+defaultLocation = os.path.join(os.getcwd(), 'output')
 
 class Experiment():
-    def __init__(self, name = None, finalizeGraph = False, max_to_keep = 5, keep_checkpoint_every_n_hours = 1):
+    def __init__(self, name = None, location = defaultLocation , finalizeGraph = False, max_to_keep = 5, keep_checkpoint_every_n_hours = 1):
         self.runName = Repository('.').head.shorthand if name == None else name
-        self.modelSaveDir = os.path.join(os.getcwd(), 'output', self.runName, 'trainedModels')
+    
+        self.modelSaveDir = os.path.join(defaultLocation, self.runName, 'trainedModels')
         self.modelSavePath = os.path.join(self.modelSaveDir, 'model.ckpt')
-
         self.graphSavePath = os.path.join('output', self.runName, 'graph')
-        
+
         print('graph location ======================================>')
         print('tensorboard --logdir ', self.graphSavePath)
         print('<====================================== graph location ')
 
+        self.checkpoint = None
         self.env = dm()
-        self.env.training.currentEpoch = 0
+        self.env.training.currentEpoch = self.getCurrentCheckpoint()
+
         # setSaver
         self.finalizeGraph = finalizeGraph
 
@@ -82,6 +85,17 @@ class Experiment():
     def saveGraph(self):
         with tf.Session() as session:
             tf.summary.FileWriter(self.graphSavePath).add_graph(session.graph)
+
+    def getCurrentCheckpoint(self):
+        # resetore session is present
+        self.checkpoint = tf.train.latest_checkpoint(self.modelSaveDir)
+        epoch = 0
+        if self.checkpoint:
+            epoch = self.checkpoint.split('-')[-1]
+            epoch = int(epoch) + 1
+        
+        return epoch
+ 
 
     def setUpTrainingSession(self, session, saveGraph):
         if saveGraph:
