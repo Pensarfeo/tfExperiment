@@ -92,7 +92,7 @@ class Experiment():
         epoch = 0
         if self.checkpoint:
             epoch = self.checkpoint.split('-')[-1]
-            epoch = int(epoch) + 1
+            epoch = int(epoch)
         
         return epoch
  
