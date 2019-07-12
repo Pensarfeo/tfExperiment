@@ -28,11 +28,14 @@ experiment.test(runTestCallback)
 
 ## API
 
-### ```__init__(self.name = None, finalizeGraph = False)```
+### ```__init__(name = None, finalizeGraph = False, location = os.path.join(os.getcwd(), 'output'))```
 
 * ```name: string```: Name of the experiment, if no name is provided the name of the current git branch will be used.
 
 * ```finalizeGraph: bool```: Finalizes the graph. *Attention* I have not tried this feature much.
+
+* ```location: string```: absolute path where the experiment results where saved in a folder with same name as name
+
 
 ### ```train(trainCallback, epochs = 1, saveModelAfter = 2, saveGraph = False, testCallback = None, testAfter = 0)```
 
