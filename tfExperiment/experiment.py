@@ -53,7 +53,7 @@ class Experiment():
             self.config.gpu_options.allow_growth = True
 
         if not hasattr(self, 'loud'):
-            self.loud = None
+            self.loud = True
 
         if not hasattr(self, 'rootPath'):
             self.rootPath = os.getcwd()
@@ -111,7 +111,7 @@ class Experiment():
         print('===> Graph Built')
 
 
-    def printFun(self, *args):
+    def print(self, *args):
         if self.loud:
             print(*args)
 
@@ -121,7 +121,7 @@ class Experiment():
 
     def getCurrentCheckpoint(self):
         # resetore session is present
-        checkpoint = tf.train.latest_checkpoint(self.env.modelSaveDir)
+        checkpoint = tf.train.latest_checkpoint(self.env.modelSavePath)
         epoch = 0
         if checkpoint:
             epoch = checkpoint.split('-')[-1]
@@ -132,18 +132,17 @@ class Experiment():
     def saveSession(self, session, epoch):
         self.saver.save(
             session,
-            self.env.modelSavePath,
+            self.env.modelSaveDir,
             global_step = epoch
         )
-        self.printFun('===> Session Saved @ epoch nr {epoch} ')
+        self.print(f'===> Session Saved @ epoch nr {epoch} ')
 
     def setUpSession(self, session):
         tf.global_variables_initializer().run()
 
         checkpoint, epoch = self.getCurrentCheckpoint()
-        
         if checkpoint != None:
-            print('loading checkpoint :', checkpoint)
+            self.print('loading checkpoint :', checkpoint)
             self.saver.restore(session, checkpoint)
 
         return epoch, checkpoint
@@ -155,31 +154,31 @@ class Experiment():
         fun = getattr(self, type)
 
         timer = Timer()
-        self.printFun(f'===> Starting {type}')
+        self.print(f'===> Starting {type}')
         withEnv(self.env, fun, session)
-        self.printFun(f'===> Ended {type} after: {timer.elapsedTot()}')
+        self.print(f'===> Ended {type} after: {timer.elapsedTot()}')
 
     def run(self, epochs, saveAfter, validateAfter):
         self.epochs = epochs
         self.saveAfter = saveAfter
         self.validateAfter = validateAfter
-        
+
         env = self.env
         timer = Timer()
 
         with tf.Session(config = self.config) as session:
-            epoch, _ = self.setUpSession(session)
-            lastEpoch = epoch
+            env.training.currentEpoch, _ = self.setUpSession(session)
 
-            for j in range(lastEpoch, lastEpoch + self.epochs):
-                env.training.currentEpoch = epoch + 1
+            for j in range(0, self.epochs):
+                env.training.currentEpoch += 1
 
+                print('EPOCH ===>', env.training.currentEpoch)
                 self.runEpoch(session, 'train')
 
-                if (((j - lastEpoch + 1)  % self.saveAfter) == 0):
+                if (((j + 1)  % self.saveAfter) == 0):
                     self.saveSession(session, env.training.currentEpoch)
 
-                if ((j - lastEpoch + 1)  % self.validateAfter) == 0:
+                if ((j + 1)  % self.validateAfter) == 0:
                     self.runEpoch(session, 'validate')
             print('===> Training Completed')
             print('Tot Time Elapsed ', timer.elapsedTot() )
