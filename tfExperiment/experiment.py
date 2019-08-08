@@ -7,7 +7,7 @@ from dotmap import DotMap as dm
 from stepTimer import Timer
 from dataSaver import DataSaver
 
-from .cacheManager import CacheManager
+from .cacheManager import CacheManager, inExperimentsOwnBranch
 
 # keys to be defined in child
 # , epochs, saveAfter, testAfter, loud = True
@@ -22,6 +22,7 @@ def withEnv(env, cb, *args):
         return cb(*args, env = env)
     else:
         return cb(*args)
+
 
 def initEnvironment(rootPath):
     print('graph location ======================================>')
@@ -80,40 +81,49 @@ class Experiment():
             self.net = None
 
         if not hasattr(self, 'max_to_keep'):
-            self.max_to_keep = None
+            self.max_to_keep = 10
 
         if not hasattr(self, 'keep_checkpoint_every_n_hours'):
-            self.keep_checkpoint_every_n_hours = None
+            self.keep_checkpoint_every_n_hours = 1
 
         self.env = initEnvironment(self.rootPath)
         self.saver = None
         
-    def cache(self, files = None):
-        checkpoint, _ = self.getCurrentCheckpoint()
+    def cache(self, files = None, reBuildCache = True):
         if files != None:
             cacheManager = CacheManager(self.rootPath, self.sourcePath, files)
+            inOwnBranch, expName, branchName = inExperimentsOwnBranch()
 
-            if not checkpoint:
+            checkpoint, _ = self.getCurrentCheckpoint()
+
+            if (not checkpoint) and inOwnBranch and reBuildCache:
                 cacheManager.createCache()
+            elif (not inOwnBranch) and cacheManager.cached:
+                wrongBranchMessage = 'ATTENTION Not in experiment\'s branch. Loading from cache.'
+                print('===>', wrongBranchMessage)                
+            elif (not inOwnBranch) and cacheManager.cached:
+                raise Exception('ERROR: Cache not found and not in eperiment\'s branch')
+            else:
+                print('===> Loading network module from cache.')
+
             return cacheManager.moduleLoader
 
-    def networkLoader(self):
-        return self.cache(self.toCacheFiles)
+    def print(self, *args):
+        if self.loud:
+            print(*args)
 
-    def build(self):
+    def networkLoader(self, reBuildCache):
+        return self.cache(self.toCacheFiles, reBuildCache = reBuildCache)
+
+    def build(self, reBuildCache = True):
         print('===> Building Graph...')
-        loader = self.networkLoader()
+        loader = self.networkLoader(reBuildCache)
         self.net = self.buildNetwork(loader)
         self.saver = tf.train.Saver(
             max_to_keep = self.max_to_keep,
             keep_checkpoint_every_n_hours = self.keep_checkpoint_every_n_hours
         )
         print('===> Graph Built')
-
-
-    def print(self, *args):
-        if self.loud:
-            print(*args)
 
     def saveGraph(self, session):
         with tf.Session() as session:
@@ -195,8 +205,3 @@ class Experiment():
             timer = Timer()
             self.runEpoch(session, 'testing')
             print(f'===> Testing Completed after {timer.elapsedTot()}')
-
-        
-
-
-

@@ -16,9 +16,7 @@ def initializer(*toCopyFiles):
     date = time.strftime("%Y-%m-%d-%H:%M")
     expPath = os.path.join('experiments', expName)
     
-    try:
-        os.makedirs(expPath)
-    except:
+    if os.path.isdir(expPath):
         raise Exception(f'{expPath} expriment already exists, please delete the expeirment to continue')
 
     # create info
@@ -31,9 +29,16 @@ def initializer(*toCopyFiles):
         description = description 
     )
 
+    try:
+        os.makedirs(expPath)
+    except:
+        raise Exception(f'{expPath} expriment already exists, please delete the expeirment to continue')
+
+
     with withinPath(toDir = expPath, fromDir = os.getcwd()):
         with open('info.json', 'w', encoding='utf-8') as f:
             json.dump(info, f, ensure_ascii=False, indent=4)
+
     # copy files
     endPath = os.path.join(os.getcwd(), 'experiments', expName)
     copyFiles(toCopyFiles, endPath)

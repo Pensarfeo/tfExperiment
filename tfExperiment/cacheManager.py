@@ -6,6 +6,16 @@ import logging
 
 from .withinPath import withinPath
 
+from pygit2 import Repository
+import json
+
+def inExperimentsOwnBranch():
+    data = json.load(open('config.json', 'r'))
+    experimentName = data['name']
+    branchName = Repository('.').head.shorthand
+
+    return branchName == experimentName, experimentName, branchName
+
 def copyFiles(files, destinationDir):
     for file in files:
         if os.path.isdir(file):  
