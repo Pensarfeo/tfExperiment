@@ -7,7 +7,7 @@ from dotmap import DotMap as dm
 from stepTimer import Timer
 from dataSaver import DataSaver
 
-from .cacheManager import CacheManager, inExperimentsOwnBranch
+from .cacheManager import CacheManager
 
 # keys to be defined in child
 # , epochs, saveAfter, testAfter, loud = True
@@ -92,7 +92,7 @@ class Experiment():
     def cache(self, files = None, reBuildCache = True):
         if files != None:
             cacheManager = CacheManager(self.rootPath, self.sourcePath, files)
-            inOwnBranch, expName, branchName = inExperimentsOwnBranch()
+            inOwnBranch, expName, branchName = cacheManager.inExperimentsOwnBranch()
 
             checkpoint, _ = self.getCurrentCheckpoint()
 
