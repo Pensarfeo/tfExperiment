@@ -89,19 +89,19 @@ class Experiment():
         self.env = initEnvironment(self.rootPath)
         self.saver = None
         
-    def cache(self, files = None, reBuildCache = True):
+    def cache(self, files = None, rebuildCache = True):
         if files != None:
             cacheManager = CacheManager(self.rootPath, self.sourcePath, files)
             inOwnBranch, expName, branchName = cacheManager.inExperimentsOwnBranch()
 
             checkpoint, _ = self.getCurrentCheckpoint()
 
-            if (not checkpoint) and inOwnBranch and reBuildCache:
+            if (not checkpoint) and inOwnBranch and rebuildCache:
                 cacheManager.createCache()
             elif (not inOwnBranch) and cacheManager.cached:
                 wrongBranchMessage = 'ATTENTION Not in experiment\'s branch. Loading from cache.'
                 print('===>', wrongBranchMessage)                
-            elif (not inOwnBranch) and cacheManager.cached:
+            elif (not inOwnBranch) and not(cacheManager.cached):
                 raise Exception('ERROR: Cache not found and not in eperiment\'s branch')
             else:
                 print('===> Loading network module from cache.')
@@ -112,12 +112,12 @@ class Experiment():
         if self.loud:
             print(*args)
 
-    def networkLoader(self, reBuildCache):
-        return self.cache(self.toCacheFiles, reBuildCache = reBuildCache)
+    def networkLoader(self, rebuildCache):
+        return self.cache(self.toCacheFiles, rebuildCache = rebuildCache)
 
-    def build(self, reBuildCache = True):
+    def build(self, rebuildCache = True):
         print('===> Building Graph...')
-        loader = self.networkLoader(reBuildCache)
+        loader = self.networkLoader(rebuildCache)
         self.net = self.buildNetwork(loader)
         self.saver = tf.train.Saver(
             max_to_keep = self.max_to_keep,

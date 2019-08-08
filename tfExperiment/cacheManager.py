@@ -32,13 +32,12 @@ class CacheManager():
         self.cached = os.path.isdir(self.cachePath)
         self.files = toCacheFiles
 
+    def inExperimentsOwnBranch(self):
+        data = json.load(open('info.json', 'r'))
+        experimentName = data['name']
+        branchName = Repository(self.sourcePath).head.shorthand
 
-def inExperimentsOwnBranch(self):
-    data = json.load(open('info.json', 'r'))
-    experimentName = data['name']
-    branchName = Repository(self.sourcePath).head.shorthand
-
-    return branchName == experimentName, experimentName, branchName
+        return branchName == experimentName, experimentName, branchName
     # for now on we are going to be working from the experiment forder in the outputs... may be it needs a new name.
     # Every experiment need to be fully contained within the cache folder and everythin in the network is loaded relative to cache folder as root so no chance should be needed from the original script
     # 
