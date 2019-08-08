@@ -10,7 +10,7 @@ from pygit2 import Repository
 import json
 
 def inExperimentsOwnBranch():
-    data = json.load(open('config.json', 'r'))
+    data = json.load(open('info.json', 'r'))
     experimentName = data['name']
     branchName = Repository('.').head.shorthand
 
