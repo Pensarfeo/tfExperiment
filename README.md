@@ -59,7 +59,7 @@ Runs the testing/validation of the model once
 
 * ```testCallback: function```: Function to call to test/validate the current network. Similar to trainCallback.
 
-### ```env: DotMap object```
+### ```env: Box object```
 
 The env object contains
 

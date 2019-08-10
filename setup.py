@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name = "tfExperiment",
-    version = "1.0.4",
+    version = "1.1.4",
     author = "Pedro A. Favuzzi",
     author_email = "pa.favuzzi@gmail.com",
     description = "A simple library to manage Tensorflow experiments though git and reduce boilerplate. Compatible with tf 1.x",
@@ -19,7 +19,7 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     install_requires = [            # I get to this in a second
-        "dotmap",
+        "python-box",
         "dataSaver",
         "stepTimer",
         "pygit2",

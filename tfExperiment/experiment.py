@@ -1,8 +1,9 @@
 import os
 import inspect
 import tensorflow as tf
+import json
 
-from dotmap import DotMap as dm 
+from box import Box 
 
 from stepTimer import Timer
 from dataSaver import DataSaver
@@ -24,30 +25,57 @@ def withEnv(env, cb, *args):
         return cb(*args)
 
 
-def initEnvironment(rootPath):
+def initEnvironment(rootPath, hyperparams, repetition):
+    hyperString = str(hyperparams).replace(' ', '')[1:-1].replace('\'', '').replace(':', '--').replace(',', '__')
+    repString = str(repetition)
+    rootOutputPath = os.path.join(rootPath, 'output', hyperString)
+    outputPath = os.path.join(rootOutputPath, repString)
+    
+
     print('graph location ======================================>')
     print('tensorboard --logdir ', os.path.join(rootPath, 'graph'))
     print('<====================================== graph location ')
-    env = dm()
 
-    env.modelSavePath = os.path.join(rootPath, 'trainedModels')
+    env = Box(hyperparams = hyperparams, repetition = repetition)
+
+    env.hyperparams = hyperparams
+    env.repetition = repetition
+
+    env.dataSavePath = os.path.join(outputPath, 'data')
+    env.modelSavePath = os.path.join(outputPath, 'trainedModels')
     env.modelSaveDir = os.path.join(env.modelSavePath, 'model.ckpt')
     
     env.graphSavePath = os.path.join(rootPath, 'graph')
 
-    # init all directories
-    training = env.training
-    training.dataSaver = initDatasaver(rootPath, 'training')
 
-    testing = env.testing
-    testing.dataSaver = initDatasaver(rootPath, 'testing')
-
+    hyperparamsFilePath = os.path.join(rootOutputPath, 'hyperparms.json')
+    
     os.makedirs(env.modelSavePath, exist_ok = True)
+    os.makedirs(env.dataSavePath, exist_ok = True)
 
+    print(f'===> Output dir created @ {hyperString}/{outputPath}')
+    with open(hyperparamsFilePath, 'w', encoding='utf-8') as f:
+        json.dump(hyperparams.to_dict(), f, ensure_ascii=False, indent=4)
+
+    
+    # init all directories
+    env.training = Box(
+        dataSaver = initDatasaver(outputPath, 'training'),
+    )
+
+    env.testing = Box(
+        dataSaver = initDatasaver(outputPath, 'testing'),
+    )
     return env
 
 class Experiment():
-    def __init__(self):      
+    def __init__(self, hyperparams, repetition = 0):
+
+        try:
+            int(repetition)
+        except:
+            raise Exception(f'@@@> ERROR: repetition must be and int, we got {repetition}')
+
         # this should be overwritten
         if not hasattr(self, 'config'):
             self.config = tf.ConfigProto()
@@ -86,7 +114,7 @@ class Experiment():
         if not hasattr(self, 'keep_checkpoint_every_n_hours'):
             self.keep_checkpoint_every_n_hours = 1
 
-        self.env = initEnvironment(self.rootPath)
+        self.env = initEnvironment(self.rootPath, hyperparams, repetition)
         self.saver = None
         
     def cache(self, files = None, rebuildCache = True):
@@ -118,7 +146,7 @@ class Experiment():
     def build(self, rebuildCache = True):
         print('===> Building Graph...')
         loader = self.networkLoader(rebuildCache)
-        self.net = self.buildNetwork(loader)
+        self.net = self.buildNetwork(loader, self.env.hyperparams)
         self.saver = tf.train.Saver(
             max_to_keep = self.max_to_keep,
             keep_checkpoint_every_n_hours = self.keep_checkpoint_every_n_hours
@@ -157,16 +185,19 @@ class Experiment():
 
         return epoch, checkpoint
 
-    def runEpoch(self, session, type):
+    def runTask(self, session, type):
         if not hasattr(self, type):
             return
 
         fun = getattr(self, type)
-
         timer = Timer()
         self.print(f'===> Starting {type}')
-        withEnv(self.env, fun, session)
+        runOutput = withEnv(self.env, fun, session)
         self.print(f'===> Ended {type} after: {timer.elapsedTot()}')
+        return runOutput
+
+    def stopRunLoop(self, *args):
+        return False
 
     def run(self, epochs, saveAfter, validateAfter):
         self.epochs = epochs
@@ -178,18 +209,24 @@ class Experiment():
 
         with tf.Session(config = self.config) as session:
             env.training.currentEpoch, _ = self.setUpSession(session)
-
             for j in range(0, self.epochs):
                 env.training.currentEpoch += 1
 
                 print('EPOCH ===>', env.training.currentEpoch)
-                self.runEpoch(session, 'train')
-
+                trainingOutput = self.runTask(session, 'train')
+                
                 if (((j + 1)  % self.saveAfter) == 0):
                     self.saveSession(session, env.training.currentEpoch)
 
                 if ((j + 1)  % self.validateAfter) == 0:
-                    self.runEpoch(session, 'validate')
+                    validationOutput = self.runTask(session, 'validate')
+                
+                stopLoop = self.stopRunLoop(trainingOutput, validationOutput)
+
+                if stopLoop == True:
+                    print('breaking loop')
+                    break
+
             print('===> Training Completed')
             print('Tot Time Elapsed ', timer.elapsedTot() )
     
@@ -203,5 +240,5 @@ class Experiment():
                 raise Exception(f'No model saved @{self.env.modelSavePath}')
 
             timer = Timer()
-            self.runEpoch(session, 'testing')
+            self.runTask(session, 'testing')
             print(f'===> Testing Completed after {timer.elapsedTot()}')

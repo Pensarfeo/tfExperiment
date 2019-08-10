@@ -1,7 +1,6 @@
 import os
 import time
 import json
-import pygit2
 
 from pygit2 import Repository
 
