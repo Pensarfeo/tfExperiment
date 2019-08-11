@@ -10,13 +10,16 @@ from .withinPath import withinPath
 # experiment data
 # data creation
 
+def experimentDirExists(expPath):
+    raise Exception(f'{expPath} expriment already exists, please delete the expeirment to continue')
+
 def initializer(*toCopyFiles):
     expName = Repository('.').head.shorthand
     date = time.strftime("%Y-%m-%d-%H:%M")
     expPath = os.path.join('experiments', expName)
     
     if os.path.isdir(expPath):
-        raise Exception(f'{expPath} expriment already exists, please delete the expeirment to continue')
+        experimentDirExists(expPath)
 
     # create info
     print("Enter Experiment description:")
@@ -31,7 +34,7 @@ def initializer(*toCopyFiles):
     try:
         os.makedirs(expPath)
     except:
-        raise Exception(f'{expPath} expriment already exists, please delete the expeirment to continue')
+        experimentDirExists(expPath)
 
 
     with withinPath(toDir = expPath, fromDir = os.getcwd()):

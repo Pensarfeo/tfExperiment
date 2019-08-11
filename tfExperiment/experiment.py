@@ -10,6 +10,8 @@ from dataSaver import DataSaver
 
 from .cacheManager import CacheManager
 
+from .errors import Errors
+
 # keys to be defined in child
 # , epochs, saveAfter, testAfter, loud = True
 
@@ -24,9 +26,20 @@ def withEnv(env, cb, *args):
     else:
         return cb(*args)
 
+def shortenHyperparamsString(hyperparams):
+    pathString = []
+    for k in list(hyperparams.keys()):
+        if len(k) <= 2:
+            pathString.append(f'{k}--{hyperparams[k]}')
+        else:
+            uppercases = ''.join([ l for l in k if l.isupper() ])
+            neBlock = f'{k[0]}{uppercases}--{hyperparams[k]}'
+            pathString.append(neBlock)
+
+    return '__'.join(pathString)
 
 def initEnvironment(rootPath, hyperparams, repetition):
-    hyperString = str(hyperparams).replace(' ', '')[1:-1].replace('\'', '').replace(':', '--').replace(',', '__')
+    hyperString = shortenHyperparamsString(hyperparams)
     repString = str(repetition)
     rootOutputPath = os.path.join(rootPath, 'output', hyperString)
     outputPath = os.path.join(rootOutputPath, repString)
@@ -52,11 +65,20 @@ def initEnvironment(rootPath, hyperparams, repetition):
     
     os.makedirs(env.modelSavePath, exist_ok = True)
     os.makedirs(env.dataSavePath, exist_ok = True)
-
     print(f'===> Output dir created @ {hyperString}/{outputPath}')
-    with open(hyperparamsFilePath, 'w', encoding='utf-8') as f:
-        json.dump(hyperparams.to_dict(), f, ensure_ascii=False, indent=4)
 
+    if os.path.isfile(hyperparamsFilePath):
+        previousHyperparams = json.load(open(hyperparamsFilePath, 'r'))
+
+        prevHString = str(previousHyperparams)
+        newHString = str(hyperparams.to_dict())
+
+        if (prevHString != newHString):
+            Errors.nonMatchingHyperparams(newHString, prevHString)
+    else:
+        with open(hyperparamsFilePath, 'w', encoding='utf-8') as f:
+            json.dump(hyperparams.to_dict(), f, ensure_ascii=False, indent=4)
+            print(f'===> HyperParams File created.')
     
     # init all directories
     env.training = Box(
@@ -74,7 +96,7 @@ class Experiment():
         try:
             int(repetition)
         except:
-            raise Exception(f'@@@> ERROR: repetition must be and int, we got {repetition}')
+            ErrorsrepetitionMustBeInt(repetition)
 
         # this should be overwritten
         if not hasattr(self, 'config'):
@@ -130,7 +152,7 @@ class Experiment():
                 wrongBranchMessage = 'ATTENTION Not in experiment\'s branch. Loading from cache.'
                 print('===>', wrongBranchMessage)                
             elif (not inOwnBranch) and not(cacheManager.cached):
-                raise Exception('ERROR: Cache not found and not in eperiment\'s branch')
+                Errors.noCacheAndNotInBranch()
             else:
                 print('===> Loading network module from cache.')
 
@@ -237,7 +259,7 @@ class Experiment():
             epoch, checkpoint = self.setUpSession(session)
             env.training.currentEpoch = epoch
             if not checkpoint:
-                raise Exception(f'No model saved @{self.env.modelSavePath}')
+                Errors.noCheckpointFoundAt(self.env.modelSavePath)
 
             timer = Timer()
             self.runTask(session, 'testing')
