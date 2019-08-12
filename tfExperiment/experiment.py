@@ -61,7 +61,7 @@ def initEnvironment(rootPath, hyperparams, repetition):
     env.graphSavePath = os.path.join(rootPath, 'graph')
 
 
-    hyperparamsFilePath = os.path.join(rootOutputPath, 'hyperparms.json')
+    hyperparamsFilePath = os.path.join(rootOutputPath, 'hyperparams.json')
     
     os.makedirs(env.modelSavePath, exist_ok = True)
     os.makedirs(env.dataSavePath, exist_ok = True)
