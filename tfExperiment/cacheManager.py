@@ -8,6 +8,8 @@ from .withinPath import withinPath
 
 from pygit2 import Repository
 import json
+import sys
+
 
 def copyFiles(files, destinationDir):
     for file in files:
@@ -43,10 +45,16 @@ class CacheManager():
     # 
     def moduleLoader(self, reload = False):
         with withinPath(toDir = self.cachePath, fromDir = self.rootPath):
+            originalPath = sys.path
+            
+            if '.' not in sys.path:
+                sys.path = ['.'].extend(originalPath)
+
             module = importlib.import_module('network')
             if reload:
                 module = importlib.reload(module)
 
+            sys.path = originalPath
         return module
 
     def destroyCache(self):

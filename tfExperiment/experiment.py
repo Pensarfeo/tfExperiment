@@ -45,10 +45,6 @@ def initEnvironment(rootPath, hyperparams, repetition):
     outputPath = os.path.join(rootOutputPath, repString)
     
 
-    print('graph location ======================================>')
-    print('tensorboard --logdir ', os.path.join(rootPath, 'graph'))
-    print('<====================================== graph location ')
-
     env = Box(hyperparams = hyperparams, repetition = repetition)
 
     env.hyperparams = hyperparams
@@ -58,11 +54,16 @@ def initEnvironment(rootPath, hyperparams, repetition):
     env.modelSavePath = os.path.join(outputPath, 'trainedModels')
     env.modelSaveDir = os.path.join(env.modelSavePath, 'model.ckpt')
     
-    env.graphSavePath = os.path.join(rootPath, 'graph')
+    env.graphSavePath = os.path.join(rootOutputPath, 'graph')
 
 
     hyperparamsFilePath = os.path.join(rootOutputPath, 'hyperparams.json')
-    
+
+    print('graph location ======================================>')
+    print('tensorboard --logdir ', os.path.join(rootOutputPath, 'graph'))
+    print('<====================================== graph location ')
+
+
     os.makedirs(env.modelSavePath, exist_ok = True)
     os.makedirs(env.dataSavePath, exist_ok = True)
     print(f'===> Output dir created @ {hyperString}/{outputPath}')
@@ -175,9 +176,11 @@ class Experiment():
         )
         print('===> Graph Built')
 
-    def saveGraph(self, session):
-        with tf.Session() as session:
-            tf.summary.FileWriter(self.env.graphSavePath).add_graph(session.graph)
+    def saveGraph(self, session = None):
+        if not session:
+            session = tf.Session()
+        
+        tf.summary.FileWriter(self.env.graphSavePath).add_graph(session.graph)
 
     def getCurrentCheckpoint(self):
         # resetore session is present
